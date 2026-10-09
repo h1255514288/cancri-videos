@@ -1,0 +1,69 @@
+name: Video distribution verification
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verification-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: go test ./... -count=1 -timeout=2m
+      - run: go vet ./...
+      - run: go build ./...
+      - run: python -m unittest discover -s scripts -p '*_test.py' -v
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: vds_test
+          POSTGRES_PASSWORD: isolated-ci-password
+          POSTGRES_DB: vds_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vds_test -d vds_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      VDS_TEST_DATABASE_URL: postgres://vds_test:isolated-ci-password@127.0.0.1:5432/vds_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+      - run: go test -race ./... -count=1 -timeout=2m
+      - run: go test -race -tags integration ./tests/integration -count=1 -v -timeout=3m
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python scripts/compose_smoke.py --fault-tests
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compose-verification
+          path: smoke-reports/
+          if-no-files-found: ignore
+          retention-days: 7

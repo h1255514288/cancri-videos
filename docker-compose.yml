@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: video_distribution
+      POSTGRES_PASSWORD: ${VDS_DB_PASSWORD:?Set VDS_DB_PASSWORD}
+      POSTGRES_DB: video_distribution
+    ports:
+      - "127.0.0.1:${VDS_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U video_distribution -d video_distribution"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  control:
+    build:
+      context: .
+      args:
+        GOPROXY: ${VDS_BUILD_GOPROXY:-https://proxy.golang.org,direct}
+    command: ["control"]
+    environment: &app_environment
+      VDS_DB_HOST: postgres
+      VDS_DB_USER: video_distribution
+      VDS_DB_PASSWORD: ${VDS_DB_PASSWORD:?Set VDS_DB_PASSWORD}
+      VDS_DB_NAME: video_distribution
+      VDS_DB_SSLMODE: disable
+      VDS_JWT_SECRET: ${VDS_JWT_SECRET:?Set a random secret of at least 32 bytes}
+      VDS_LISTEN_ADDR: 0.0.0.0:8080
+    ports:
+      - "127.0.0.1:${VDS_CONTROL_PORT:-8080}:8080"
+    volumes:
+      - video_storage:/var/video-distribution/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+  node:
+    build:
+      context: .
+      args:
+        GOPROXY: ${VDS_BUILD_GOPROXY:-https://proxy.golang.org,direct}
+    command: ["node"]
+    environment:
+      <<: *app_environment
+      VDS_LISTEN_ADDR: 0.0.0.0:8001
+      VDS_NODE_ID: "1"
+    ports:
+      - "127.0.0.1:${VDS_NODE_PORT:-8001}:8001"
+    volumes:
+      - video_storage:/var/video-distribution/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  postgres_data:
+  video_storage:

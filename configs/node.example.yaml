@@ -1,0 +1,25 @@
+# Node 服务配置示例
+role: node
+address: "0.0.0.0:8001"
+shutdown_timeout: 30s
+
+# 数据库配置
+db_host: localhost
+db_port: 5432
+db_user: video_distribution
+db_password: your_password_here
+db_name: video_distribution
+db_sslmode: disable
+db_max_conns: 10
+
+# JWT 密钥（必须与 control 相同）
+jwt_secret: "change-this-secret-in-production-min-32-chars"
+
+# 存储配置
+storage_root: "/var/video-distribution/storage"
+node_name: "node-1"
+
+# 下载限制
+max_concurrent_downloads: 50
+download_idle_timeout: 300s
+download_max_duration: 3600s

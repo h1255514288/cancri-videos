@@ -1,0 +1,7 @@
+.git
+.env
+.env.*
+*.exe
+smoke-reports
+**/__pycache__
+**/*.pyc

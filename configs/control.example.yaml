@@ -1,0 +1,21 @@
+# Control 服务配置示例
+role: control
+address: "0.0.0.0:8080"
+shutdown_timeout: 30s
+
+# 数据库配置
+db_host: localhost
+db_port: 5432
+db_user: video_distribution
+db_password: your_password_here
+db_name: video_distribution
+db_sslmode: disable
+db_max_conns: 20
+
+# JWT 密钥（生产环境必须更换）
+jwt_secret: "change-this-secret-in-production-min-32-chars"
+
+# 业务规则
+claim_reservation_minutes: 10
+download_retry_hours: 1
+max_upload_size_mb: 5120

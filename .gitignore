@@ -1,0 +1,52 @@
+# 二进制文件
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试输出
+__pycache__/
+*.pyc
+smoke-reports/
+.env
+.env.*
+!.env.example
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# 依赖
+vendor/
+
+# 配置文件（排除示例文件）
+configs/*.yaml
+!configs/*.example.yaml
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 存储目录
+storage/
+uploads/
+
+# 数据库
+*.db
+*.sqlite
